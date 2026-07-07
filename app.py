@@ -1,11 +1,74 @@
 import streamlit as st
-import google.generativeai as genai
+import google.genai as genai
+from google.genai import types
 import re
 
-# Config Halaman Utama
-st.set_page_config(page_title="Generator AI Perangkat Ajar 1 Tahun", layout="wide", page_icon="📚")
+# ==========================================
+# 🔑 AMBIL API KEY DARI STREAMLIT SECRETS (AMAN)
+# ==========================================
+if "GEMINI_API_KEY" in st.secrets:
+    GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
+else:
+    GEMINI_API_KEY = ""
 
-# Inisialisasi Session State agar data tidak hilang saat pindah halaman
+# Config Halaman Utama & Tema
+st.set_page_config(
+    page_title="Generator AI Perangkat Ajar 1 Tahun", 
+    layout="wide", 
+    page_icon="📚"
+)
+
+# Kustomisasi Style Antarmuka (Premium Dark Modern Theme)
+st.markdown("""
+<style>
+    /* Mengubah font dan background global */
+    html, body, [data-testid="stAppViewContainer"] {
+        background-color: #0d0f12;
+        color: #e2e8f0;
+    }
+    
+    /* Style untuk form input login & data */
+    .stTextInput>div>div>input, .stSelectbox>div>div>div {
+        background-color: #1a1f26 !important;
+        color: #ffffff !important;
+        border: 1px solid #2d3748 !important;
+        border-radius: 8px !important;
+    }
+    
+    /* Box cetak dokumen / print-box */
+    .print-box { 
+        background: #ffffff; 
+        padding: 30px; 
+        border: 1px solid #cbd5e1; 
+        border-radius: 8px; 
+        color: #0f172a; 
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    }
+    .print-box table { 
+        width: 100%; 
+        border-collapse: collapse; 
+        margin-bottom: 20px; 
+    }
+    .print-box th, .print-box td { 
+        border: 1px solid #94a3b8; 
+        padding: 10px; 
+        text-align: left; 
+    }
+    .print-box th { 
+        background-color: #f1f5f9; 
+        color: #0f172a;
+        font-weight: bold;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# URL Gambar Default yang kompatibel
+LOGO_URL = "https://lh3.googleusercontent.com/d/1iNQvoD5FsMyCrj6MN4bhE3DshZdqnIYP"
+
+# Inisialisasi Session State
+if 'logged_in' not in st.session_state:
+    st.session_state['logged_in'] = False
+
 if 'dokumen_data' not in st.session_state:
     st.session_state['dokumen_data'] = {
         "cp": "Belum digenerate.", "tp": "Belum digenerate.", "atp": "Belum digenerate.",
@@ -15,9 +78,34 @@ if 'dokumen_data' not in st.session_state:
 if 'is_generated' not in st.session_state:
     st.session_state['is_generated'] = False
 
-# --- SIDEBAR NAVIGASI ---
+
+# ==========================================
+# 🔒 HALAMAN 1: FORM LOGIN
+# ==========================================
+if not st.session_state['logged_in']:
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.markdown("<br><br>", unsafe_allow_html=True)
+        st.title("🔒 Login Generator Perangkat Ajar")
+        st.caption("Masuk menggunakan kredensial akun guru Anda.")
+        
+        username = st.text_input("Username / NIP")
+        password = st.text_input("Password", type="password")
+        
+        if st.button("Masuk Aplikasi 🚀", type="primary", use_container_width=True):
+            if username == "admin" and password == "guruakbar":
+                st.session_state['logged_in'] = True
+                st.rerun()
+            else:
+                st.error("❌ Username atau Password salah! Hubungi Tim IT Kurikulum.")
+    st.stop()
+
+
+# ==========================================
+# 🎛️ SIDEBAR NAVIGASI DASHBOARD
+# ==========================================
 st.sidebar.markdown("### 🤖 Gemini Generator AI")
-st.sidebar.caption("Perangkat Ajar 1 Tahun")
+st.sidebar.caption("Sistem Kurikulum Merdeka v2.0")
 st.sidebar.markdown("---")
 
 menu = st.sidebar.radio(
@@ -36,17 +124,22 @@ menu = st.sidebar.radio(
 )
 
 st.sidebar.markdown("---")
-# Input API Key diletakkan di bawah sidebar agar rapi
-api_key = st.sidebar.text_input("🔑 Masukkan Gemini API Key:", type="password")
-model_choice = st.sidebar.selectbox("Pilih Model:", ["gemini-1.5-flash", "gemini-1.5-pro"])
+model_choice = st.sidebar.selectbox("Pilih Otak AI (Model):", ["gemini-1.5-flash", "gemini-1.5-pro"])
 
-# --- HALAMAN 1: DATA GLOBAL (INPUT) ---
+if st.sidebar.button("Logout 🚪", use_container_width=True):
+    st.session_state['logged_in'] = False
+    st.session_state['is_generated'] = False
+    st.rerun()
+
+
+# ==========================================
+# 📁 DASHBOARD HALAMAN INPUT DATA
+# ==========================================
 if menu == "📁 Data Global (Input)":
     st.title("Data Global (Input)")
-    st.markdown("### **Input Data Global 1 Tahun**")
-    st.caption("Isi identitas dan komponen dasar (TP & Materi akan ditarik otomatis oleh AI saat Generate).")
+    st.markdown("### **Input Identitas Kurikulum Merdeka 1 Tahun**")
+    st.caption("Lengkapi instrumen dasar sekolah di bawah ini. Dokumen capaian dan materi ajar akan diformulasikan otomatis oleh AI.")
     
-    # Grid Form 3 Kolom
     col1, col2, col3 = st.columns(3)
     
     with col1:
@@ -65,25 +158,20 @@ if menu == "📁 Data Global (Input)":
         
     with col3:
         satuan_pendidikan = st.text_input("Satuan Pendidikan", "SMK AKBAR UMBULSARI")
-        singkatan_mapel = st.text_input("Singkatan Mapel (Mis: DDPPLG)", "DDPPLG")
+        singkatan_mapel = st.text_input("Singkatan Mapel", "DDPPLG")
         alokasi_waktu = st.text_input("Alokasi Waktu Total", "432 JP / Tahun")
         nama_guru = st.text_input("Nama Guru", "Achmad Muhtarus Shokheh, S.Kom")
 
     st.markdown("---")
     
-    # Tombol Utama Generate
     if st.button("🚀 Generate Dokumen 1 s.d. 7 Sekaligus", type="primary", use_container_width=True):
-        if not api_key:
-            st.error("❌ Mohon isi Gemini API Key di sidebar sebelah kiri terlebih dahulu!")
+        if not GEMINI_API_KEY:
+            st.error("❌ Kunci API Gemini tidak ditemukan di Streamlit Secrets!")
         else:
-            with st.spinner("🧠 AI sedang memproses seluruh dokumen kurikulum secara sinkronos... Mohon tunggu..."):
+            with st.spinner("🧠 AI sedang menyusun program kurikulum tahunan & tabel administrasi ajar... Silakan tunggu..."):
                 try:
-                    genai.configure(api_key=api_key)
+                    client = genai.Client(api_key=GEMINI_API_KEY)
                     
-                    # Memanggil model_choice secara langsung tanpa prefix 'models/'
-                    model = genai.GenerativeModel(model_choice)
-                    
-                    # Prompt terstruktur menggunakan XML tags untuk mempermudah pemisahan halaman
                     prompt = f"""
                     Anda adalah sistem pakar Kurikulum Merdeka Kemendikbud RI. Buatlah perangkat ajar komprehensif berformat Markdown dan tabel HTML berdasarkan data berikut:
                     - Sekolah: {satuan_pendidikan} ({Yayasan}, {provinsi})
@@ -105,10 +193,12 @@ if menu == "📁 Data Global (Input)":
                     <modul>Disini isi 1 Contoh Modul Ajar utuh standar Kurikulum Merdeka lengkap dengan langkah inti & asesmen</modul>
                     """
                     
-                    response = model.generate_content(prompt)
+                    response = client.models.generate_content(
+                        model=model_choice,
+                        contents=prompt
+                    )
                     text = response.text
                     
-                    # Regex Parsing untuk memisahkan teks ke masing-masing halaman menu
                     keys = ["cp", "tp", "atp", "prota", "prosem1", "prosem2", "kktp", "modul"]
                     for key in keys:
                         match = re.search(f"<{key}>(.*?)</{key}>", text, re.DOTALL)
@@ -116,14 +206,16 @@ if menu == "📁 Data Global (Input)":
                             st.session_state['dokumen_data'][key] = match.group(1).strip()
                     
                     st.session_state['is_generated'] = True
-                    st.success("🎉 Semua dokumen berhasil dibuat! Silakan klik menu di sidebar kiri untuk melihat hasilnya satu per satu.")
+                    st.success("🎉 Seluruh instrumen administrasi mengajar berhasil dibuat! Silakan buka panel menu sebelah kiri.")
                     
                 except Exception as e:
-                    st.error(f"Gagal generate dokumen: {e}")
+                    st.error(f"Terjadi kesalahan saat memproses data AI: {e}")
 
-# --- FUNGSI MERENDER HALAMAN DOKUMEN ---
+
+# ==========================================
+# 📄 DISPLAY & UNDUH HASIL GENERATE DOKUMEN
+# ==========================================
 else:
-    # Mapping menu ke key session state
     menu_mapping = {
         "📄 1. Analisis CP": "cp",
         "📄 2. Tujuan Pemb. (TP)": "tp",
@@ -139,27 +231,18 @@ else:
     st.title(menu)
     
     if not st.session_state['is_generated']:
-        st.warning("⚠️ Dokumen belum di-generate. Silakan kembali ke menu **📁 Data Global (Input)** untuk membuat dokumen terlebih dahulu.")
+        st.warning("⚠️ Data administrasi belum siap. Silakan kembali ke menu **📁 Data Global (Input)** untuk menjalankan proses penciptaan dokumen.")
     else:
-        # Style khusus biar tampilan tabel HTML rapi ala cetakan kertas printer
-        st.markdown("""
-        <style>
-        .print-box { background: white; padding: 25px; border: 1px solid #d1d5db; border-radius: 6px; color: black; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
-        th, td { border: 1px solid #4b5563; padding: 8px; text-align: left; }
-        th { background-color: #f3f4f6; }
-        </style>
-        """, unsafe_allow_html=True)
-        
         st.markdown('<div class="print-box">', unsafe_allow_html=True)
         st.markdown(st.session_state['dokumen_data'][current_key], unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
         
-        st.markdown("---")
-        # Tombol download mandiri per halaman
+        st.markdown("<br>", unsafe_allow_html=True)
+        
         st.download_button(
-            label=f"📥 Download {menu[4:]} (.md)",
+            label=f"📥 Download File {menu[5:]} (.md)",
             data=st.session_state['dokumen_data'][current_key],
             file_name=f"{current_key}.md",
-            mime="text/markdown"
+            mime="text/markdown",
+            use_container_width=True
         )
