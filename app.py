@@ -1,5 +1,6 @@
 import streamlit as st
-import google.generativeai as genai
+import google.genai as genai
+from google.genai import types
 import re
 
 # ==========================================
@@ -8,7 +9,6 @@ import re
 if "GEMINI_API_KEY" in st.secrets:
     GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
 else:
-    # Cadangan jika Anda lupa memasukkannya di panel Advanced Settings Streamlit
     GEMINI_API_KEY = ""
 
 # Config Halaman Utama & Tema
@@ -21,21 +21,16 @@ st.set_page_config(
 # Kustomisasi Style Antarmuka (Premium Dark Modern Theme)
 st.markdown("""
 <style>
-    /* Mengubah font dan background global */
     html, body, [data-testid="stAppViewContainer"] {
         background-color: #0d0f12;
         color: #e2e8f0;
     }
-    
-    /* Style untuk form input login & data */
     .stTextInput>div>div>input, .stSelectbox>div>div>div {
         background-color: #1a1f26 !important;
         color: #ffffff !important;
         border: 1px solid #2d3748 !important;
         border-radius: 8px !important;
     }
-    
-    /* Box cetak dokumen / print-box */
     .print-box { 
         background: #ffffff; 
         padding: 30px; 
@@ -61,9 +56,6 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
-
-# URL Gambar Default / Logo
-LOGO_URL = "https://lh3.googleusercontent.com/d/1iNQvoD5FsMyCrj6MN4bhE3DshZdqnIYP"
 
 # Inisialisasi Session State
 if 'logged_in' not in st.session_state:
@@ -166,13 +158,12 @@ if menu == "📁 Data Global (Input)":
     
     if st.button("🚀 Generate Dokumen 1 s.d. 7 Sekaligus", type="primary", use_container_width=True):
         if not GEMINI_API_KEY:
-            st.error("❌ Kunci API Gemini tidak terdeteksi! Pastikan sudah memasukkannya ke Streamlit Secrets di Dashboard Streamlit Cloud.")
+            st.error("❌ Kunci API Gemini tidak ditemukan di Streamlit Secrets!")
         else:
             with st.spinner("🧠 AI sedang menyusun program kurikulum tahunan & tabel administrasi ajar... Silakan tunggu..."):
                 try:
-                    # Menggunakan metode konfigurasi pustaka bawaan yang stabil
-                    genai.configure(api_key=GEMINI_API_KEY)
-                    model = genai.GenerativeModel(model_choice)
+                    # Menggunakan SDK baru yang cocok dengan API Key berawalan 'AQ...'
+                    client = genai.Client(api_key=GEMINI_API_KEY)
                     
                     prompt = f"""
                     Anda adalah sistem pakar Kurikulum Merdeka Kemendikbud RI. Buatlah perangkat ajar komprehensif berformat Markdown dan tabel HTML berdasarkan data berikut:
@@ -195,7 +186,10 @@ if menu == "📁 Data Global (Input)":
                     <modul>Disini isi 1 Contoh Modul Ajar utuh standar Kurikulum Merdeka lengkap dengan langkah inti & asesmen</modul>
                     """
                     
-                    response = model.generate_content(prompt)
+                    response = client.models.generate_content(
+                        model=model_choice,
+                        contents=prompt
+                    )
                     text = response.text
                     
                     keys = ["cp", "tp", "atp", "prota", "prosem1", "prosem2", "kktp", "modul"]
