@@ -53,21 +53,20 @@ if menu == "📁 Data Global (Input)":
         provinsi = st.text_input("Provinsi / Kota", "Jawa Timur")
         alamat_sekolah = st.text_input("Alamat Sekolah", "Jl. Pb. Sudirman No.50 Gunungsari Umbulsari")
         fase_kelas = st.text_input("Fase / Kelas", "Fase F / Kelas XII")
-        jp_minggu = st.text_input("JP per Minggu", "12 JP/Minggu") # Disesuaikan dengan input terbaru Anda
+        jp_minggu = st.text_input("JP per Minggu", "12 JP/Minggu")
         kota_ttd = st.text_input("Kota, Tanggal TTD", "Jember, 17 Juli 2026")
         
     with col2:
         Yayasan = st.text_input("Yayasan", "Yayasan Sosial Akbar Sejahtera")
         mata_pelajaran = st.text_input("Mata Pelajaran", "Dasar-Dasar Pengembangan Perangkat Lunak dan Gim")
         tahun_pelajaran = st.text_input("Tahun Pelajaran", "2026/2027")
-        durasi_pertemuan = st.text_input("Durasi 1x Pertemuan", "4 JP (80 Menit)") # Disesuaikan dengan input terbaru Anda
+        durasi_pertemuan = st.text_input("Durasi 1x Pertemuan", "4 JP (80 Menit)")
         nama_kepsek = st.text_input("Nama Kepsek", "Indah Purwandari, S.Pd.I")
         
     with col3:
         satuan_pendidikan = st.text_input("Satuan Pendidikan", "SMK AKBAR UMBULSARI")
-        
-        singkatan_mapel = st.text_input("Singkatan Mapel (Mis: DDPPLG)", "DDPPLG") # Disesuaikan dengan input terbaru Anda
-        alokasi_waktu = st.text_input("Alokasi Waktu Total", "432 JP / Tahun") # Disesuaikan dengan input terbaru Anda
+        singkatan_mapel = st.text_input("Singkatan Mapel (Mis: DDPPLG)", "DDPPLG")
+        alokasi_waktu = st.text_input("Alokasi Waktu Total", "432 JP / Tahun")
         nama_guru = st.text_input("Nama Guru", "Achmad Muhtarus Shokheh, S.Kom")
 
     st.markdown("---")
@@ -81,10 +80,8 @@ if menu == "📁 Data Global (Input)":
                 try:
                     genai.configure(api_key=api_key)
                     
-                    # PERBAIKAN: Menambahkan prefiks 'models/' agar tidak terjadi Error 404 pada Streamlit Cloud
-                    # Cukup panggil model_choice secara langsung tanpa prefix 'models/'
-                        model = genai.GenerativeModel(model_choice)
-                    
+                    # Memanggil model_choice secara langsung tanpa prefix 'models/'
+                    model = genai.GenerativeModel(model_choice)
                     
                     # Prompt terstruktur menggunakan XML tags untuk mempermudah pemisahan halaman
                     prompt = f"""
