@@ -82,8 +82,9 @@ if menu == "📁 Data Global (Input)":
                     genai.configure(api_key=api_key)
                     
                     # PERBAIKAN: Menambahkan prefiks 'models/' agar tidak terjadi Error 404 pada Streamlit Cloud
-                    full_model_name = f"models/{model_choice}"
-                    model = genai.GenerativeModel(full_model_name)
+                    # Cukup panggil model_choice secara langsung tanpa prefix 'models/'
+                        model = genai.GenerativeModel(model_choice)
+                    
                     
                     # Prompt terstruktur menggunakan XML tags untuk mempermudah pemisahan halaman
                     prompt = f"""
