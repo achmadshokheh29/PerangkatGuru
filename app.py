@@ -1,14 +1,14 @@
 import streamlit as st
-import google.genai as genai
-from google.genai import types
+import google.generativeai as genai
 import re
 
 # ==========================================
-# 🔑 AMBIL API KEY DARI STREAMLIT SECRETS (AMAN)
+# 🔑 AMBIL API KEY DARI STREAMLIT SECRETS
 # ==========================================
 if "GEMINI_API_KEY" in st.secrets:
     GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
 else:
+    # Cadangan jika Anda lupa memasukkannya di panel Advanced Settings Streamlit
     GEMINI_API_KEY = ""
 
 # Config Halaman Utama & Tema
@@ -62,7 +62,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# URL Gambar Default yang kompatibel
+# URL Gambar Default / Logo
 LOGO_URL = "https://lh3.googleusercontent.com/d/1iNQvoD5FsMyCrj6MN4bhE3DshZdqnIYP"
 
 # Inisialisasi Session State
@@ -166,11 +166,13 @@ if menu == "📁 Data Global (Input)":
     
     if st.button("🚀 Generate Dokumen 1 s.d. 7 Sekaligus", type="primary", use_container_width=True):
         if not GEMINI_API_KEY:
-            st.error("❌ Kunci API Gemini tidak ditemukan di Streamlit Secrets!")
+            st.error("❌ Kunci API Gemini tidak terdeteksi! Pastikan sudah memasukkannya ke Streamlit Secrets di Dashboard Streamlit Cloud.")
         else:
             with st.spinner("🧠 AI sedang menyusun program kurikulum tahunan & tabel administrasi ajar... Silakan tunggu..."):
                 try:
-                    client = genai.Client(api_key=GEMINI_API_KEY)
+                    # Menggunakan metode konfigurasi pustaka bawaan yang stabil
+                    genai.configure(api_key=GEMINI_API_KEY)
+                    model = genai.GenerativeModel(model_choice)
                     
                     prompt = f"""
                     Anda adalah sistem pakar Kurikulum Merdeka Kemendikbud RI. Buatlah perangkat ajar komprehensif berformat Markdown dan tabel HTML berdasarkan data berikut:
@@ -193,10 +195,7 @@ if menu == "📁 Data Global (Input)":
                     <modul>Disini isi 1 Contoh Modul Ajar utuh standar Kurikulum Merdeka lengkap dengan langkah inti & asesmen</modul>
                     """
                     
-                    response = client.models.generate_content(
-                        model=model_choice,
-                        contents=prompt
-                    )
+                    response = model.generate_content(prompt)
                     text = response.text
                     
                     keys = ["cp", "tp", "atp", "prota", "prosem1", "prosem2", "kktp", "modul"]
