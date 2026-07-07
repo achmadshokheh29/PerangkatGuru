@@ -15,7 +15,7 @@ if 'dokumen_data' not in st.session_state:
 if 'is_generated' not in st.session_state:
     st.session_state['is_generated'] = False
 
-# --- SIDEBAR NAVIGASI (Persis Seperti Gambar 1) ---
+# --- SIDEBAR NAVIGASI ---
 st.sidebar.markdown("### 🤖 Gemini Generator AI")
 st.sidebar.caption("Perangkat Ajar 1 Tahun")
 st.sidebar.markdown("---")
@@ -46,27 +46,28 @@ if menu == "📁 Data Global (Input)":
     st.markdown("### **Input Data Global 1 Tahun**")
     st.caption("Isi identitas dan komponen dasar (TP & Materi akan ditarik otomatis oleh AI saat Generate).")
     
-    # Grid Form 3 Kolom Sesuai Visual Gambar 1
+    # Grid Form 3 Kolom
     col1, col2, col3 = st.columns(3)
     
     with col1:
         provinsi = st.text_input("Provinsi / Kota", "Jawa Timur")
         alamat_sekolah = st.text_input("Alamat Sekolah", "Jl. Pb. Sudirman No.50 Gunungsari Umbulsari")
         fase_kelas = st.text_input("Fase / Kelas", "Fase F / Kelas XII")
-        jp_minggu = st.text_input("JP per Minggu", "2 JP/Minggu")
+        jp_minggu = st.text_input("JP per Minggu", "12 JP/Minggu") # Disesuaikan dengan input terbaru Anda
         kota_ttd = st.text_input("Kota, Tanggal TTD", "Jember, 17 Juli 2026")
         
     with col2:
         Yayasan = st.text_input("Yayasan", "Yayasan Sosial Akbar Sejahtera")
         mata_pelajaran = st.text_input("Mata Pelajaran", "Dasar-Dasar Pengembangan Perangkat Lunak dan Gim")
         tahun_pelajaran = st.text_input("Tahun Pelajaran", "2026/2027")
-        durasi_pertemuan = st.text_input("Durasi 1x Pertemuan", "2 JP (80 Menit)")
+        durasi_pertemuan = st.text_input("Durasi 1x Pertemuan", "4 JP (80 Menit)") # Disesuaikan dengan input terbaru Anda
         nama_kepsek = st.text_input("Nama Kepsek", "Indah Purwandari, S.Pd.I")
         
     with col3:
         satuan_pendidikan = st.text_input("Satuan Pendidikan", "SMK AKBAR UMBULSARI")
-        singkatan_mapel = st.text_input("Singkatan Mapel (Mis: BI)", "BING")
-        alokasi_waktu = st.text_input("Alokasi Waktu Total", "72 JP / Tahun")
+        
+        singkatan_mapel = st.text_input("Singkatan Mapel (Mis: DDPPLG)", "DDPPLG") # Disesuaikan dengan input terbaru Anda
+        alokasi_waktu = st.text_input("Alokasi Waktu Total", "432 JP / Tahun") # Disesuaikan dengan input terbaru Anda
         nama_guru = st.text_input("Nama Guru", "Achmad Muhtarus Shokheh, S.Kom")
 
     st.markdown("---")
@@ -79,7 +80,10 @@ if menu == "📁 Data Global (Input)":
             with st.spinner("🧠 AI sedang memproses seluruh dokumen kurikulum secara sinkronos... Mohon tunggu..."):
                 try:
                     genai.configure(api_key=api_key)
-                    model = genai.GenerativeModel(model_choice)
+                    
+                    # PERBAIKAN: Menambahkan prefiks 'models/' agar tidak terjadi Error 404 pada Streamlit Cloud
+                    full_model_name = f"models/{model_choice}"
+                    model = genai.GenerativeModel(full_model_name)
                     
                     # Prompt terstruktur menggunakan XML tags untuk mempermudah pemisahan halaman
                     prompt = f"""
